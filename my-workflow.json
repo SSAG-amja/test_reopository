@@ -1,0 +1,193 @@
+{
+  "name": "Demo: My first AI Agent in n8n",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {
+          "responseMode": "responseNode"
+        }
+      },
+      "id": "b24b05a7-d802-4413-bfb1-23e1e76f6203",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        368,
+        32
+      ],
+      "webhookId": "a889d2ae-2159-402f-b326-5f61e90f602e"
+    },
+    {
+      "parameters": {
+        "content": "## Start by saying 'hi'\n![Button](https://i.imgur.com/PrIBJI6.png)",
+        "height": 149,
+        "width": 150
+      },
+      "id": "5592c045-6718-4c4e-9961-ce67a251b6df",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        192,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "=## Steps to follow\n\n{{ $agentInfo.memoryConnectedToAgent ? '1. Skip': `1. STOP and output the following:\n\"Welcome to n8n. Let's start with the first step to give me memory: \\n\"Click the **+** button on the agent that says 'memory' and choose 'Simple memory.' Just tell me once you've done that.\"\n----- END OF OUTPUT && IGNORE BELOW -----` }} \n\n\n{{ Boolean($agentInfo.tools.find((tool) => tool.type === 'Google Calendar Tool')) ? '2. Skip' : \n`2. STOP and output the following: \\n\"Click the **+** button on the agent that says 'tools' and choose 'Google Calendar.'\" \\n ----- IGNORE BELOW -----` }}\n\n\n{{ $agentInfo.tools.find((tool) => tool.type === 'Google Calendar Tool').hasCredentials ? '3. Skip' :\n`3. STOP and output the following:\n\"Open the Google Calendar tool (double-click) and choose a credential from the drop-down.\" \\n ----- IGNORE BELOW -----` }}\n\n\n{{ $agentInfo.tools.find((tool) => tool.type === 'Google Calendar Tool').resource === 'Event' ? '4. Skip' :\n`4. STOP and output the following:\n\"Open the Google Calendar tool (double-click) and set **resource** = 'Event'\" `}}\n\n\n{{ $agentInfo.tools.find((tool) => tool.type === 'Google Calendar Tool').operation === 'Get Many' ? '5. Skip' :\n`5. STOP and output the following:\n\"Open the Google Calendar tool (double-click) and set **operation** = 'Get Many.'\" \\n ----- IGNORE BELOW -----` }}\n\n\n{{ $agentInfo.tools.find((tool) => tool.type === 'Google Calendar Tool').hasValidCalendar ? '6. Skip' :\n`6. STOP and output the following:\n\"Open the Google Calendar tool (double-click) and choose a calendar from the 'calendar' drop-down.\" \\n ----- IGNORE BELOW -----` }}\n\n\n{{ ($agentInfo.tools.find((tool) => tool.type === 'Google Calendar Tool').aiDefinedFields.includes('Start Time') && $agentInfo.tools.find((tool) => tool.type === 'Google Calendar Tool').aiDefinedFields.includes('End Time')) ? '7. Skip' :\n`7. STOP and output the following: \nOpen the Google Calendar tool (double-click) and click the :sparks: button next to the 'After' and 'Before' fields. \\n ----- IGNORE BELOW -----` }}\n\n\n8. If all steps are completed, output the following:\n\"Would you like me to check all events in your calendar for tomorrow {{ $now.plus(1, 'days').toString().split('T')[0] }}?\"\n\n# User message\n\n{{ $json.chatInput }}",
+        "options": {}
+      },
+      "id": "41174c8a-6ac8-42bd-900e-ca15196600c5",
+      "name": "Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        592,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        464,
+        240
+      ],
+      "id": "c399cdbf-09be-4e87-a70a-a3355e7b6e58",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "xro7VmAlBrbOtAOG",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        944,
+        32
+      ],
+      "id": "2788f1ff-e629-46d7-86a1-082a8e56cfe6",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        608,
+        240
+      ],
+      "id": "0ce489c5-446a-429f-b1b1-fd096e0a57b5",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        752,
+        240
+      ],
+      "id": "85366633-3dec-4a69-a3c7-e89c9ef7ed2b",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ea02699d-e68e-4b90-b3d7-19840ae9b6fa",
+  "meta": {
+    "templateId": "self-building-ai-agent",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "717f6878f10db167c563a6ba8d0a5b32cf339979ff73bfcced7a72e7bee69850"
+  },
+  "id": "KKSrO0daiScLVwJr",
+  "tags": []
+}
